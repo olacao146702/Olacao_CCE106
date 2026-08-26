@@ -79,7 +79,7 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        {/* Goal */}
+        {/* My Goal */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardNumber}>02</Text>
