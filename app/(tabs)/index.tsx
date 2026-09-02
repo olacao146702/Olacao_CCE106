@@ -1,327 +1,292 @@
-import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
 import {
-  Alert,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
+  View,
   Text,
   TextInput,
-  View,
+  TouchableOpacity,
+  StyleSheet,
 } from 'react-native';
 
-export default function ProfileScreen() {
-  const [name, setName] = useState('');
-  const [program, setProgram] = useState('');
-  const [bio, setBio] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+export default function Calculator() {
+  const [firstNumber, setFirstNumber] = useState('');
+  const [secondNumber, setSecondNumber] = useState('');
+  const [result, setResult] = useState('');
+  const [message, setMessage] = useState('');
 
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
-
-  // Open camera
-  const takePhoto = async () => {
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
-
-    if (!permission.granted) {
-      Alert.alert(
-        'Camera Permission',
-        'Please allow camera access to take a profile photo.'
-      );
+  const calculate = (operation: string) => {
+    // Validate empty input
+    if (firstNumber.trim() === '' || secondNumber.trim() === '') {
+      setResult('');
+      setMessage('Please enter both numbers.');
       return;
     }
 
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
+    // Convert input to numbers
+    const num1 = Number(firstNumber);
+    const num2 = Number(secondNumber);
 
-    if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
-      setSaved(false);
-    }
-  };
-
-  // Save profile
-  const saveProfile = () => {
-    if (!name.trim() || !program.trim()) {
-      Alert.alert(
-        'Missing Information',
-        'Please enter your full name and program.'
-      );
+    // Validate invalid input
+    if (isNaN(num1) || isNaN(num2)) {
+      setResult('');
+      setMessage('Please enter valid numbers.');
       return;
     }
 
-    setSaved(true);
+    // Prevent division by zero
+    if (operation === '/' && num2 === 0) {
+      setResult('');
+      setMessage('Cannot divide by zero.');
+      return;
+    }
 
-    Alert.alert(
-      'Profile Saved',
-      'Your profile information has been saved.'
-    );
+    let answer = 0;
+
+    switch (operation) {
+      case '+':
+        answer = num1 + num2;
+        break;
+
+      case '-':
+        answer = num1 - num2;
+        break;
+
+      case '*':
+        answer = num1 * num2;
+        break;
+
+      case '/':
+        answer = num1 / num2;
+        break;
+    }
+
+    setResult(String(answer));
+    setMessage('Calculation successful!');
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
-    >
-      <Text style={styles.title}>Personal Profile</Text>
+    <View style={styles.container}>
 
-      {/* PROFILE PHOTO */}
-      <View style={styles.photoSection}>
-        {profileImage ? (
-          <Image
-            source={{ uri: profileImage }}
-            style={styles.profileImage}
-          />
-        ) : (
-          <View style={styles.placeholder}>
-            <Text style={styles.placeholderText}>👤</Text>
-          </View>
-        )}
 
-        <Pressable
-          onPress={takePhoto}
-          style={({ pressed }) => [
-            styles.cameraButton,
-            pressed && styles.buttonPressed,
-          ]}
-        >
-          <Text style={styles.cameraButtonText}>
-            {profileImage ? '📷 RETAKE PHOTO' : '📷 TAKE PROFILE PHOTO'}
-          </Text>
-        </Pressable>
-      </View>
+      <Text style={styles.title}>SIMPLE CALCULATOR</Text>
 
-      {/* NAME */}
-      <Text style={styles.label}>Full Name *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your full name"
-        value={name}
-        onChangeText={setName}
-      />
+      <View style={styles.card}>
 
-      {/* PROGRAM */}
-      <Text style={styles.label}>Program *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your program"
-        value={program}
-        onChangeText={setProgram}
-      />
+        {/* First Number */}
+        <Text style={styles.label}>FIRST NUMBER</Text>
 
-      {/* BIO */}
-      <Text style={styles.label}>Biography</Text>
-      <TextInput
-        style={[styles.input, styles.bioInput]}
-        placeholder="Tell something about yourself"
-        value={bio}
-        onChangeText={setBio}
-        multiline
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter first number"
+          placeholderTextColor="#777"
+          keyboardType="numeric"
+          value={firstNumber}
+          onChangeText={setFirstNumber}
+        />
 
-      {/* EMAIL */}
-      <Text style={styles.label}>Email</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+        {/* Second Number */}
+        <Text style={styles.label}>SECOND NUMBER</Text>
 
-      {/* PHONE */}
-      <Text style={styles.label}>Contact Number</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your contact number"
-        value={phone}
-        onChangeText={setPhone}
-        keyboardType="phone-pad"
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter second number"
+          placeholderTextColor="#777"
+          keyboardType="numeric"
+          value={secondNumber}
+          onChangeText={setSecondNumber}
+        />
 
-      {/* SAVE BUTTON */}
-      <Pressable
-        onPress={saveProfile}
-        style={({ pressed }) => [
-          styles.saveButton,
-          pressed && styles.buttonPressed,
-        ]}
-      >
-        <Text style={styles.saveButtonText}>SAVE PROFILE</Text>
-      </Pressable>
+        {/* Operations */}
+        <Text style={styles.label}>OPERATIONS</Text>
 
-      {/* SAVED RESULT */}
-      {saved && (
-        <View style={styles.savedContainer}>
-          <Text style={styles.savedTitle}>✓ PROFILE SAVED</Text>
+        <View style={styles.operations}>
 
-          {profileImage && (
-            <Image
-              source={{ uri: profileImage }}
-              style={styles.savedImage}
-            />
-          )}
+          <TouchableOpacity
+            style={styles.operationButton}
+            onPress={() => calculate('+')}
+          >
+            <Text style={styles.operationText}>+</Text>
+          </TouchableOpacity>
 
-          <Text style={styles.savedText}>
-            <Text style={styles.bold}>Name:</Text> {name}
-          </Text>
+          <TouchableOpacity
+            style={styles.operationButton}
+            onPress={() => calculate('-')}
+          >
+            <Text style={styles.operationText}>−</Text>
+          </TouchableOpacity>
 
-          <Text style={styles.savedText}>
-            <Text style={styles.bold}>Program:</Text> {program}
-          </Text>
+          <TouchableOpacity
+            style={styles.operationButton}
+            onPress={() => calculate('*')}
+          >
+            <Text style={styles.operationText}>×</Text>
+          </TouchableOpacity>
 
-          {bio !== '' && (
-            <Text style={styles.savedText}>
-              <Text style={styles.bold}>Bio:</Text> {bio}
-            </Text>
-          )}
+          <TouchableOpacity
+            style={styles.operationButton}
+            onPress={() => calculate('/')}
+          >
+            <Text style={styles.operationText}>÷</Text>
+          </TouchableOpacity>
 
-          {email !== '' && (
-            <Text style={styles.savedText}>
-              <Text style={styles.bold}>Email:</Text> {email}
-            </Text>
-          )}
-
-          {phone !== '' && (
-            <Text style={styles.savedText}>
-              <Text style={styles.bold}>Contact:</Text> {phone}
-            </Text>
-          )}
         </View>
-      )}
-    </ScrollView>
+
+        {/* Result */}
+        <Text style={styles.label}>RESULT</Text>
+
+        <View style={styles.resultBox}>
+          <Text style={styles.resultText}>
+            {result || '—'}
+          </Text>
+        </View>
+
+        {/* Message */}
+        <Text style={styles.label}>MESSAGE</Text>
+
+        <View style={styles.messageBox}>
+          <Text style={styles.messageText}>
+            {message || 'Enter two numbers and choose an operation.'}
+          </Text>
+        </View>
+
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: '#080808',
     padding: 20,
-    paddingBottom: 40,
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
 
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    color: '#ffffff',
+    fontSize: 36,
+    fontWeight: '900',
     textAlign: 'center',
-    marginBottom: 25,
+    letterSpacing: 4,
+    marginBottom: 4,
   },
 
-  photoSection: {
-    alignItems: 'center',
-    marginBottom: 25,
+  subtitle: {
+    color: '#e50914',
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
+    letterSpacing: 3,
+    marginBottom: 20,
   },
 
-  profileImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    marginBottom: 15,
-  },
-
-  placeholder: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: '#e5e5e5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-
-  placeholderText: {
-    fontSize: 65,
-  },
-
-  cameraButton: {
-    backgroundColor: '#333',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-  },
-
-  cameraButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
+  card: {
+    backgroundColor: '#111111',
+    borderWidth: 1,
+    borderColor: '#e50914',
+    borderRadius: 24,
+    padding: 20,
+    shadowColor: '#e50914',
+    shadowOpacity: 0.35,
+    shadowRadius: 15,
+    elevation: 10,
   },
 
   label: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 6,
-    marginTop: 12,
+    color: '#e50914',
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 2,
+    marginBottom: 8,
+    marginTop: 10,
   },
 
   input: {
+    height: 55,
+    backgroundColor: '#080808',
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
-  },
-
-  bioInput: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-
-  saveButton: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 25,
-  },
-
-  saveButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-
-  buttonPressed: {
-    opacity: 0.6,
-    transform: [{ scale: 0.98 }],
-  },
-
-  savedContainer: {
-    marginTop: 25,
-    padding: 20,
+    borderColor: '#8b0000',
     borderRadius: 12,
-    backgroundColor: '#e8f5e9',
-    borderWidth: 1,
-    borderColor: '#81c784',
+    paddingHorizontal: 16,
+    color: '#ffffff',
+    fontSize: 20,
   },
 
-  savedTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
+  operations: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 4,
+    marginBottom: 10,
+  },
+
+  operationButton: {
+    width: '22%',
+    height: 60,
+    backgroundColor: '#8b0000',
+    borderWidth: 1,
+    borderColor: '#e50914',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  operationText: {
+    color: '#ffffff',
+    fontSize: 30,
+    fontWeight: '800',
+  },
+
+  resultBox: {
+    height: 65,
+    backgroundColor: '#080808',
+    borderWidth: 1,
+    borderColor: '#e50914',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  resultText: {
+    color: '#ffffff',
+    fontSize: 30,
+    fontWeight: '800',
+  },
+
+  messageBox: {
+    minHeight: 55,
+    backgroundColor: '#080808',
+    borderWidth: 1,
+    borderColor: '#8b0000',
+    borderRadius: 12,
+    padding: 14,
+    justifyContent: 'center',
+  },
+
+  messageText: {
+    color: '#ffffff',
+    fontSize: 15,
     textAlign: 'center',
   },
 
-  savedImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    alignSelf: 'center',
-    marginBottom: 15,
+  webCircle1: {
+    position: 'absolute',
+    width: 500,
+    height: 500,
+    borderRadius: 250,
+    borderWidth: 1,
+    borderColor: '#300000',
+    top: -250,
+    left: -180,
   },
 
-  savedText: {
-    fontSize: 15,
-    marginBottom: 8,
-  },
-
-  bold: {
-    fontWeight: 'bold',
+  webCircle2: {
+    position: 'absolute',
+    width: 600,
+    height: 600,
+    borderRadius: 300,
+    borderWidth: 1,
+    borderColor: '#300000',
+    bottom: -300,
+    right: -220,
   },
 });
