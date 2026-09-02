@@ -1,268 +1,327 @@
-import React from 'react';
-import { StyleSheet, View, Text, ScrollView, Dimensions } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useState } from 'react';
+import {
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
-const { width } = Dimensions.get('window');
+export default function ProfileScreen() {
+  const [name, setName] = useState('');
+  const [program, setProgram] = useState('');
+  const [bio, setBio] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
 
-export default function HomeScreen() {
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  // Open camera
+  const takePhoto = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+
+    if (!permission.granted) {
+      Alert.alert(
+        'Camera Permission',
+        'Please allow camera access to take a profile photo.'
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setProfileImage(result.assets[0].uri);
+      setSaved(false);
+    }
+  };
+
+  // Save profile
+  const saveProfile = () => {
+    if (!name.trim() || !program.trim()) {
+      Alert.alert(
+        'Missing Information',
+        'Please enter your full name and program.'
+      );
+      return;
+    }
+
+    setSaved(true);
+
+    Alert.alert(
+      'Profile Saved',
+      'Your profile information has been saved.'
+    );
+  };
+
   return (
-    <View style={styles.container}>
-      <StatusBar style="light" />
+    <ScrollView
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
+      <Text style={styles.title}>Personal Profile</Text>
 
-      {/* Background */}
-      <View style={styles.backgroundShape} />
+      {/* PROFILE PHOTO */}
+      <View style={styles.photoSection}>
+        {profileImage ? (
+          <Image
+            source={{ uri: profileImage }}
+            style={styles.profileImage}
+          />
+        ) : (
+          <View style={styles.placeholder}>
+            <Text style={styles.placeholderText}>👤</Text>
+          </View>
+        )}
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
+        <Pressable
+          onPress={takePhoto}
+          style={({ pressed }) => [
+            styles.cameraButton,
+            pressed && styles.buttonPressed,
+          ]}
+        >
+          <Text style={styles.cameraButtonText}>
+            {profileImage ? '📷 RETAKE PHOTO' : '📷 TAKE PROFILE PHOTO'}
+          </Text>
+        </Pressable>
+      </View>
+
+      {/* NAME */}
+      <Text style={styles.label}>Full Name *</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Enter your full name"
+        value={name}
+        onChangeText={setName}
+      />
+
+      {/* PROGRAM */}
+      <Text style={styles.label}>Program *</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Enter your program"
+        value={program}
+        onChangeText={setProgram}
+      />
+
+      {/* BIO */}
+      <Text style={styles.label}>Biography</Text>
+      <TextInput
+        style={[styles.input, styles.bioInput]}
+        placeholder="Tell something about yourself"
+        value={bio}
+        onChangeText={setBio}
+        multiline
+      />
+
+      {/* EMAIL */}
+      <Text style={styles.label}>Email</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Enter your email"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+
+      {/* PHONE */}
+      <Text style={styles.label}>Contact Number</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Enter your contact number"
+        value={phone}
+        onChangeText={setPhone}
+        keyboardType="phone-pad"
+      />
+
+      {/* SAVE BUTTON */}
+      <Pressable
+        onPress={saveProfile}
+        style={({ pressed }) => [
+          styles.saveButton,
+          pressed && styles.buttonPressed,
+        ]}
       >
+        <Text style={styles.saveButtonText}>SAVE PROFILE</Text>
+      </Pressable>
 
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.smallTitle}>HELLO, I'M</Text>
+      {/* SAVED RESULT */}
+      {saved && (
+        <View style={styles.savedContainer}>
+          <Text style={styles.savedTitle}>✓ PROFILE SAVED</Text>
 
-          <Text style={styles.name}>JADE H.</Text>
-          <Text style={styles.lastName}>OLACAO</Text>
+          {profileImage && (
+            <Image
+              source={{ uri: profileImage }}
+              style={styles.savedImage}
+            />
+          )}
 
-          <View style={styles.redLine} />
-
-          <Text style={styles.studentText}>
-            BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY
+          <Text style={styles.savedText}>
+            <Text style={styles.bold}>Name:</Text> {name}
           </Text>
+
+          <Text style={styles.savedText}>
+            <Text style={styles.bold}>Program:</Text> {program}
+          </Text>
+
+          {bio !== '' && (
+            <Text style={styles.savedText}>
+              <Text style={styles.bold}>Bio:</Text> {bio}
+            </Text>
+          )}
+
+          {email !== '' && (
+            <Text style={styles.savedText}>
+              <Text style={styles.bold}>Email:</Text> {email}
+            </Text>
+          )}
+
+          {phone !== '' && (
+            <Text style={styles.savedText}>
+              <Text style={styles.bold}>Contact:</Text> {phone}
+            </Text>
+          )}
         </View>
-
-        {/* About Me */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardNumber}>01</Text>
-            <Text style={styles.cardTitle}>ABOUT ME</Text>
-          </View>
-
-          <Text style={styles.introduction}>
-            Hi! I am <Text style={styles.highlight}>Jade H. Olacao</Text>,
-            19 years old, a Bachelor of Science in Information Technology student.
-          </Text>
-
-          <Text style={styles.introduction}>
-            I am excited to learn more about mobile development and explore
-            how mobile applications are created.
-          </Text>
-
-          <Text style={styles.introduction}>
-            I want to improve my programming skills by practicing, exploring
-            new technologies, creating projects, and learning from the
-            challenges I encounter along the way.
-          </Text>
-        </View>
-
-        {/* Student Information */}
-        <View style={styles.infoRow}>
-
-          <View style={styles.infoCard}>
-            <Text style={styles.infoLabel}>COURSE</Text>
-            <Text style={styles.infoValue}>BSIT</Text>
-          </View>
-
-          <View style={styles.infoCard}>
-            <Text style={styles.infoLabel}>CLASS</Text>
-            <Text style={styles.infoValue}>2013</Text>
-          </View>
-
-        </View>
-
-        {/* Subject */}
-        <View style={styles.classCard}>
-          <Text style={styles.classLabel}>CLASS CODE</Text>
-
-          <Text style={styles.classValue}>
-            CCE106
-          </Text>
-        </View>
-
-        {/* My Goal */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardNumber}>02</Text>
-            <Text style={styles.cardTitle}>MY GOAL</Text>
-          </View>
-
-          <Text style={styles.goalText}>
-            My goal is to become more confident in programming and develop
-            useful and creative mobile applications.
-          </Text>
-
-          <Text style={styles.goalText}>
-            I also want to gain more experience by building different
-            projects and continuously improving my skills as an IT student.
-          </Text>
-        </View>
-
-      </ScrollView>
-    </View>
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#080A12',
-  },
-
-  scrollContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 60,
+    padding: 20,
     paddingBottom: 40,
   },
 
-  backgroundShape: {
-    position: 'absolute',
-    width: width * 1.5,
-    height: 300,
-    backgroundColor: '#151A29',
-    borderRadius: 200,
-    top: -150,
-    left: -100,
-    opacity: 0.7,
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 25,
   },
 
-  header: {
+  photoSection: {
     alignItems: 'center',
-    marginBottom: 35,
+    marginBottom: 25,
   },
 
-  smallTitle: {
-    color: '#9CA3AF',
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 4,
+  profileImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    marginBottom: 15,
   },
 
-  name: {
-    color: '#FFFFFF',
-    fontSize: 42,
-    fontWeight: '900',
-    letterSpacing: 2,
-    marginTop: 8,
+  placeholder: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: '#e5e5e5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 15,
   },
 
-  lastName: {
-    color: '#E31B23',
-    fontSize: 42,
-    fontWeight: '900',
-    letterSpacing: 2,
+  placeholderText: {
+    fontSize: 65,
   },
 
-  redLine: {
-    width: 70,
-    height: 4,
-    backgroundColor: '#E31B23',
-    marginVertical: 15,
+  cameraButton: {
+    backgroundColor: '#333',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     borderRadius: 10,
   },
 
-  studentText: {
-    color: '#AEB4C0',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1.5,
+  cameraButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 6,
+    marginTop: 12,
+  },
+
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#fff',
+  },
+
+  bioInput: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+
+  saveButton: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 25,
+  },
+
+  saveButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+
+  buttonPressed: {
+    opacity: 0.6,
+    transform: [{ scale: 0.98 }],
+  },
+
+  savedContainer: {
+    marginTop: 25,
+    padding: 20,
+    borderRadius: 12,
+    backgroundColor: '#e8f5e9',
+    borderWidth: 1,
+    borderColor: '#81c784',
+  },
+
+  savedTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
     textAlign: 'center',
   },
 
-  card: {
-    backgroundColor: '#111522',
-    borderRadius: 18,
-    padding: 22,
-    marginBottom: 18,
-    borderWidth: 1,
-    borderColor: '#252B3A',
+  savedImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignSelf: 'center',
+    marginBottom: 15,
   },
 
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 18,
-  },
-
-  cardNumber: {
-    color: '#E31B23',
-    fontSize: 13,
-    fontWeight: '900',
-    marginRight: 12,
-  },
-
-  cardTitle: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: 2,
-  },
-
-  introduction: {
-    color: '#C4CAD5',
+  savedText: {
     fontSize: 15,
-    lineHeight: 25,
-    marginBottom: 14,
+    marginBottom: 8,
   },
 
-  highlight: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-  },
-
-  infoRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
-  },
-
-  infoCard: {
-    flex: 1,
-    backgroundColor: '#111522',
-    borderRadius: 18,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#252B3A',
-  },
-
-  infoLabel: {
-    color: '#8D95A5',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 2,
-    marginBottom: 7,
-  },
-
-  infoValue: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: '900',
-  },
-
-  classCard: {
-    backgroundColor: '#D71920',
-    borderRadius: 18,
-    padding: 20,
-    marginBottom: 18,
-  },
-
-  classLabel: {
-    color: '#FFD7D9',
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 2,
-  },
-
-  classValue: {
-    color: '#FFFFFF',
-    fontSize: 30,
-    fontWeight: '900',
-    marginTop: 5,
-  },
-
-  goalText: {
-    color: '#C4CAD5',
-    fontSize: 15,
-    lineHeight: 25,
-    marginBottom: 14,
+  bold: {
+    fontWeight: 'bold',
   },
 });
