@@ -1,327 +1,195 @@
-import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
 import {
-  Alert,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
   View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
 } from 'react-native';
 
-export default function ProfileScreen() {
-  const [name, setName] = useState('');
-  const [program, setProgram] = useState('');
-  const [bio, setBio] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+export default function Index() {
+  const [count, setCount] = useState(0);
 
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const increase = () => {
+    setCount(count + 1);
+  };
 
-  // Open camera
-  const takePhoto = async () => {
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
-
-    if (!permission.granted) {
-      Alert.alert(
-        'Camera Permission',
-        'Please allow camera access to take a profile photo.'
-      );
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
-      setSaved(false);
+  const decrease = () => {
+    if (count > 0) {
+      setCount(count - 1);
     }
   };
 
-  // Save profile
-  const saveProfile = () => {
-    if (!name.trim() || !program.trim()) {
-      Alert.alert(
-        'Missing Information',
-        'Please enter your full name and program.'
-      );
-      return;
-    }
-
-    setSaved(true);
-
-    Alert.alert(
-      'Profile Saved',
-      'Your profile information has been saved.'
-    );
+  const reset = () => {
+    setCount(0);
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
-    >
-      <Text style={styles.title}>Personal Profile</Text>
+    <View style={styles.container}>
 
-      {/* PROFILE PHOTO */}
-      <View style={styles.photoSection}>
-        {profileImage ? (
-          <Image
-            source={{ uri: profileImage }}
-            style={styles.profileImage}
-          />
-        ) : (
-          <View style={styles.placeholder}>
-            <Text style={styles.placeholderText}>👤</Text>
-          </View>
-        )}
+      <View style={styles.web1} />
+      <View style={styles.web2} />
+      <View style={styles.web3} />
 
-        <Pressable
-          onPress={takePhoto}
-          style={({ pressed }) => [
-            styles.cameraButton,
-            pressed && styles.buttonPressed,
-          ]}
-        >
-          <Text style={styles.cameraButtonText}>
-            {profileImage ? '📷 RETAKE PHOTO' : '📷 TAKE PROFILE PHOTO'}
-          </Text>
-        </Pressable>
+      <Text style={styles.title}>COUNTER APP</Text>
+
+
+      <View style={styles.counterBox}>
+        <Text style={styles.counter}>{count}</Text>
       </View>
 
-      {/* NAME */}
-      <Text style={styles.label}>Full Name *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your full name"
-        value={name}
-        onChangeText={setName}
-      />
+      <View style={styles.buttons}>
 
-      {/* PROGRAM */}
-      <Text style={styles.label}>Program *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your program"
-        value={program}
-        onChangeText={setProgram}
-      />
+        <TouchableOpacity
+          style={styles.button}
+          onPress={decrease}
+        >
+          <Text style={styles.buttonText}>−</Text>
+        </TouchableOpacity>
 
-      {/* BIO */}
-      <Text style={styles.label}>Biography</Text>
-      <TextInput
-        style={[styles.input, styles.bioInput]}
-        placeholder="Tell something about yourself"
-        value={bio}
-        onChangeText={setBio}
-        multiline
-      />
+        <TouchableOpacity
+          style={styles.button}
+          onPress={increase}
+        >
+          <Text style={styles.buttonText}>+</Text>
+        </TouchableOpacity>
 
-      {/* EMAIL */}
-      <Text style={styles.label}>Email</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+      </View>
 
-      {/* PHONE */}
-      <Text style={styles.label}>Contact Number</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your contact number"
-        value={phone}
-        onChangeText={setPhone}
-        keyboardType="phone-pad"
-      />
-
-      {/* SAVE BUTTON */}
-      <Pressable
-        onPress={saveProfile}
-        style={({ pressed }) => [
-          styles.saveButton,
-          pressed && styles.buttonPressed,
-        ]}
+      <TouchableOpacity
+        style={styles.resetButton}
+        onPress={reset}
       >
-        <Text style={styles.saveButtonText}>SAVE PROFILE</Text>
-      </Pressable>
+        <Text style={styles.resetText}>RESET TO ZERO</Text>
+      </TouchableOpacity>
 
-      {/* SAVED RESULT */}
-      {saved && (
-        <View style={styles.savedContainer}>
-          <Text style={styles.savedTitle}>✓ PROFILE SAVED</Text>
-
-          {profileImage && (
-            <Image
-              source={{ uri: profileImage }}
-              style={styles.savedImage}
-            />
-          )}
-
-          <Text style={styles.savedText}>
-            <Text style={styles.bold}>Name:</Text> {name}
-          </Text>
-
-          <Text style={styles.savedText}>
-            <Text style={styles.bold}>Program:</Text> {program}
-          </Text>
-
-          {bio !== '' && (
-            <Text style={styles.savedText}>
-              <Text style={styles.bold}>Bio:</Text> {bio}
-            </Text>
-          )}
-
-          {email !== '' && (
-            <Text style={styles.savedText}>
-              <Text style={styles.bold}>Email:</Text> {email}
-            </Text>
-          )}
-
-          {phone !== '' && (
-            <Text style={styles.savedText}>
-              <Text style={styles.bold}>Contact:</Text> {phone}
-            </Text>
-          )}
-        </View>
-      )}
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    paddingBottom: 40,
+    flex: 1,
+    backgroundColor: '#080808',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 25,
+    overflow: 'hidden',
   },
 
   title: {
-    fontSize: 28,
+    color: '#e50914',
+    fontSize: 38,
+    fontWeight: '900',
+    letterSpacing: 4,
+  },
+
+  subtitle: {
+    color: '#ffffff',
+    fontSize: 13,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 25,
+    letterSpacing: 5,
+    marginTop: 5,
+    marginBottom: 35,
   },
 
-  photoSection: {
-    alignItems: 'center',
-    marginBottom: 25,
-  },
-
-  profileImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    marginBottom: 15,
-  },
-
-  placeholder: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: '#e5e5e5',
+  counterBox: {
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: '#111111',
+    borderWidth: 5,
+    borderColor: '#e50914',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 15,
+
+    shadowColor: '#e50914',
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    shadowOpacity: 0.8,
+    shadowRadius: 20,
+    elevation: 15,
   },
 
-  placeholderText: {
-    fontSize: 65,
+  counter: {
+    color: '#ffffff',
+    fontSize: 80,
+    fontWeight: '900',
   },
 
-  cameraButton: {
-    backgroundColor: '#333',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 10,
+  buttons: {
+    flexDirection: 'row',
+    gap: 25,
+    marginTop: 40,
   },
 
-  cameraButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-
-  label: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 6,
-    marginTop: 12,
-  },
-
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
-  },
-
-  bioInput: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-
-  saveButton: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
+  button: {
+    width: 75,
+    height: 75,
+    borderRadius: 15,
+    backgroundColor: '#e50914',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 25,
+
+    borderWidth: 2,
+    borderColor: '#ff4d55',
   },
 
-  saveButtonText: {
-    color: '#fff',
+  buttonText: {
+    color: '#ffffff',
+    fontSize: 40,
     fontWeight: 'bold',
-    fontSize: 16,
   },
 
-  buttonPressed: {
-    opacity: 0.6,
-    transform: [{ scale: 0.98 }],
-  },
-
-  savedContainer: {
+  resetButton: {
     marginTop: 25,
-    padding: 20,
-    borderRadius: 12,
-    backgroundColor: '#e8f5e9',
+    paddingVertical: 15,
+    paddingHorizontal: 35,
+    borderWidth: 2,
+    borderColor: '#e50914',
+    borderRadius: 10,
+    backgroundColor: '#120304',
+  },
+
+  resetText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+  },
+
+  // Subtle web-inspired background lines
+  web1: {
+    position: 'absolute',
+    width: 500,
+    height: 500,
+    borderRadius: 250,
     borderWidth: 1,
-    borderColor: '#81c784',
+    borderColor: '#3a0a0a',
+    top: -200,
+    right: -200,
   },
 
-  savedTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
+  web2: {
+    position: 'absolute',
+    width: 350,
+    height: 350,
+    borderRadius: 175,
+    borderWidth: 1,
+    borderColor: '#3a0a0a',
+    bottom: -150,
+    left: -150,
   },
 
-  savedImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    alignSelf: 'center',
-    marginBottom: 15,
-  },
-
-  savedText: {
-    fontSize: 15,
-    marginBottom: 8,
-  },
-
-  bold: {
-    fontWeight: 'bold',
+  web3: {
+    position: 'absolute',
+    width: 700,
+    height: 700,
+    borderRadius: 350,
+    borderWidth: 1,
+    borderColor: '#1f1f1f',
+    top: -300,
+    left: -300,
   },
 });
