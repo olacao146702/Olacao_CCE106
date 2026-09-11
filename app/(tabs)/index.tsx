@@ -411,7 +411,7 @@ export default function DashboardScreen() {
           <Text style={styles.panelTitle}>Profile</Text>
 
           <View style={styles.profileCircle}>
-            <Text style={styles.profileLargeText}>P</Text>
+            <Text style={styles.profileLargeText}>JO</Text>
           </View>
 
           <Text style={styles.profileName}>Neighborhood Helper</Text>
