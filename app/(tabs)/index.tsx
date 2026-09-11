@@ -1,8 +1,5 @@
-import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
 import {
-  Alert,
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,317 +8,1028 @@ import {
   View,
 } from 'react-native';
 
-export default function ProfileScreen() {
-  const [name, setName] = useState('');
-  const [program, setProgram] = useState('');
-  const [bio, setBio] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+type Task = {
+  id: number;
+  title: string;
+  completed: boolean;
+};
 
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+type Activity = {
+  id: number;
+  text: string;
+};
 
-  // Open camera
-  const takePhoto = async () => {
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
+function MetricCard({
+  label,
+  value,
+  subtitle,
+}: {
+  label: string;
+  value: string;
+  subtitle: string;
+}) {
+  return (
+    <View style={styles.metricCard}>
+      <Text style={styles.metricLabel}>{label}</Text>
+      <Text style={styles.metricValue}>{value}</Text>
+      <Text style={styles.metricSubtitle}>{subtitle}</Text>
+    </View>
+  );
+}
 
-    if (!permission.granted) {
-      Alert.alert(
-        'Camera Permission',
-        'Please allow camera access to take a profile photo.'
-      );
+function ActivityItem({ text }: { text: string }) {
+  return (
+    <View style={styles.activityItem}>
+      <View style={styles.activityDot} />
+      <Text style={styles.activityText}>{text}</Text>
+    </View>
+  );
+}
+
+export default function DashboardScreen() {
+  const [tasks, setTasks] = useState<Task[]>([
+    {
+      id: 1,
+      title: 'Clean up trash near the sidewalk',
+      completed: false,
+    },
+    {
+      id: 2,
+      title: 'Report damaged streetlight',
+      completed: false,
+    },
+    {
+      id: 3,
+      title: 'Clear fallen branches from the road',
+      completed: true,
+    },
+  ]);
+
+  const [taskInput, setTaskInput] = useState('');
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [showAllActivity, setShowAllActivity] = useState(false);
+  const [activePanel, setActivePanel] = useState<
+    'none' | 'profile' | 'settings'
+  >('none');
+
+  const [activities, setActivities] = useState<Activity[]>([
+    {
+      id: 1,
+      text: 'Cleaned up fallen branches from the road',
+    },
+    {
+      id: 2,
+      text: 'Reported a damaged streetlight',
+    },
+    {
+      id: 3,
+      text: 'Added a new cleanup task',
+    },
+  ]);
+
+  const addActivity = (text: string) => {
+    setActivities((current) => [
+      {
+        id: Date.now(),
+        text,
+      },
+      ...current,
+    ]);
+  };
+
+  const handleAddTask = () => {
+    const title = taskInput.trim();
+
+    if (!title) {
       return;
     }
 
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
+    const newTask: Task = {
+      id: Date.now(),
+      title,
+      completed: false,
+    };
 
-    if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
-      setSaved(false);
+    setTasks((current) => [...current, newTask]);
+
+    addActivity(`Reported "${title}"`);
+
+    setTaskInput('');
+    setShowAddTask(false);
+  };
+
+  const handleDeleteTask = (id: number) => {
+    const task = tasks.find((item) => item.id === id);
+
+    setTasks((current) => current.filter((item) => item.id !== id));
+
+    if (task) {
+      addActivity(`Removed "${task.title}"`);
     }
   };
 
-  // Save profile
-  const saveProfile = () => {
-    if (!name.trim() || !program.trim()) {
-      Alert.alert(
-        'Missing Information',
-        'Please enter your full name and program.'
-      );
-      return;
-    }
+  const handleToggleTask = (id: number) => {
+    setTasks((current) =>
+      current.map((task) => {
+        if (task.id !== id) {
+          return task;
+        }
 
-    setSaved(true);
+        const newCompletedState = !task.completed;
 
-    Alert.alert(
-      'Profile Saved',
-      'Your profile information has been saved.'
+        if (newCompletedState) {
+          addActivity(`Cleaned up "${task.title}"`);
+        } else {
+          addActivity(`Reopened "${task.title}"`);
+        }
+
+        return {
+          ...task,
+          completed: newCompletedState,
+        };
+      })
     );
   };
 
+  const totalTasks = tasks.length;
+
+  const completedTasks = tasks.filter(
+    (task) => task.completed
+  ).length;
+
+  const pendingTasks = tasks.filter(
+    (task) => !task.completed
+  ).length;
+
+  const progress =
+    totalTasks === 0
+      ? 0
+      : Math.round((completedTasks / totalTasks) * 100);
+
+  const visibleActivities = showAllActivity
+    ? activities
+    : activities.slice(0, 3);
+
   return (
     <ScrollView
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
+      style={styles.container}
+      contentContainerStyle={styles.content}
     >
-      <Text style={styles.title}>Personal Profile</Text>
-
-      {/* PROFILE PHOTO */}
-      <View style={styles.photoSection}>
-        {profileImage ? (
-          <Image
-            source={{ uri: profileImage }}
-            style={styles.profileImage}
-          />
-        ) : (
-          <View style={styles.placeholder}>
-            <Text style={styles.placeholderText}>👤</Text>
-          </View>
-        )}
+      {/* HEADER */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.appName}>Spotless</Text>
+          <Text style={styles.headerTitle}>Clean Up the Mess</Text>
+        </View>
 
         <Pressable
-          onPress={takePhoto}
-          style={({ pressed }) => [
-            styles.cameraButton,
-            pressed && styles.buttonPressed,
-          ]}
+          style={styles.profileButton}
+          onPress={() =>
+            setActivePanel(
+              activePanel === 'profile' ? 'none' : 'profile'
+            )
+          }
         >
-          <Text style={styles.cameraButtonText}>
-            {profileImage ? '📷 RETAKE PHOTO' : '📷 TAKE PROFILE PHOTO'}
+          <Text style={styles.profileButtonText}>P</Text>
+        </Pressable>
+      </View>
+
+      {/* WELCOME */}
+      <View style={styles.welcomeCard}>
+        <Text style={styles.welcomeSmall}>FRIENDLY NEIGHBORHOOD</Text>
+
+        <Text style={styles.welcomeTitle}>
+          Keep the neighborhood in order.
+        </Text>
+
+        <Text style={styles.welcomeText}>
+          Report problems, clean up messes, and keep track of
+          everything that needs attention.
+        </Text>
+
+        <Pressable
+          style={styles.primaryButton}
+          onPress={() => setShowAddTask(true)}
+        >
+          <Text style={styles.primaryButtonText}>
+            + REPORT A MESS
           </Text>
         </Pressable>
       </View>
 
-      {/* NAME */}
-      <Text style={styles.label}>Full Name *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your full name"
-        value={name}
-        onChangeText={setName}
-      />
+      {/* METRICS */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Neighborhood Status</Text>
+      </View>
 
-      {/* PROGRAM */}
-      <Text style={styles.label}>Program *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your program"
-        value={program}
-        onChangeText={setProgram}
-      />
+      <View style={styles.metricsRow}>
+        <MetricCard
+          label="MESS TO CLEAN"
+          value={pendingTasks.toString()}
+          subtitle="Needs attention"
+        />
 
-      {/* BIO */}
-      <Text style={styles.label}>Biography</Text>
-      <TextInput
-        style={[styles.input, styles.bioInput]}
-        placeholder="Tell something about yourself"
-        value={bio}
-        onChangeText={setBio}
-        multiline
-      />
+        <MetricCard
+          label="CLEANED UP"
+          value={completedTasks.toString()}
+          subtitle="Problems handled"
+        />
 
-      {/* EMAIL */}
-      <Text style={styles.label}>Email</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+        <MetricCard
+          label="PROGRESS"
+          value={`${progress}%`}
+          subtitle="Neighborhood status"
+        />
+      </View>
 
-      {/* PHONE */}
-      <Text style={styles.label}>Contact Number</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your contact number"
-        value={phone}
-        onChangeText={setPhone}
-        keyboardType="phone-pad"
-      />
+      {/* REPORT A MESS */}
+      {showAddTask && (
+        <View style={styles.formCard}>
+          <Text style={styles.formTitle}>Report a Mess</Text>
 
-      {/* SAVE BUTTON */}
-      <Pressable
-        onPress={saveProfile}
-        style={({ pressed }) => [
-          styles.saveButton,
-          pressed && styles.buttonPressed,
-        ]}
-      >
-        <Text style={styles.saveButtonText}>SAVE PROFILE</Text>
-      </Pressable>
-
-      {/* SAVED RESULT */}
-      {saved && (
-        <View style={styles.savedContainer}>
-          <Text style={styles.savedTitle}>✓ PROFILE SAVED</Text>
-
-          {profileImage && (
-            <Image
-              source={{ uri: profileImage }}
-              style={styles.savedImage}
-            />
-          )}
-
-          <Text style={styles.savedText}>
-            <Text style={styles.bold}>Name:</Text> {name}
+          <Text style={styles.formDescription}>
+            Add something that needs to be cleaned, fixed, or
+            reported.
           </Text>
 
-          <Text style={styles.savedText}>
-            <Text style={styles.bold}>Program:</Text> {program}
-          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Example: Trash blocking the sidewalk"
+            placeholderTextColor="#888"
+            value={taskInput}
+            onChangeText={setTaskInput}
+          />
 
-          {bio !== '' && (
-            <Text style={styles.savedText}>
-              <Text style={styles.bold}>Bio:</Text> {bio}
-            </Text>
-          )}
+          <View style={styles.formButtons}>
+            <Pressable
+              style={styles.cancelButton}
+              onPress={() => {
+                setTaskInput('');
+                setShowAddTask(false);
+              }}
+            >
+              <Text style={styles.cancelButtonText}>CANCEL</Text>
+            </Pressable>
 
-          {email !== '' && (
-            <Text style={styles.savedText}>
-              <Text style={styles.bold}>Email:</Text> {email}
-            </Text>
-          )}
-
-          {phone !== '' && (
-            <Text style={styles.savedText}>
-              <Text style={styles.bold}>Contact:</Text> {phone}
-            </Text>
-          )}
+            <Pressable
+              style={styles.saveButton}
+              onPress={handleAddTask}
+            >
+              <Text style={styles.saveButtonText}>REPORT</Text>
+            </Pressable>
+          </View>
         </View>
       )}
+
+      {/* TASKS */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Things to Handle</Text>
+
+        <Text style={styles.taskCount}>
+          {pendingTasks} pending
+        </Text>
+      </View>
+
+      <View style={styles.taskCard}>
+        {tasks.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>All clear!</Text>
+            <Text style={styles.emptyText}>
+              No problems are currently waiting for attention.
+            </Text>
+          </View>
+        ) : (
+          tasks.map((task) => (
+            <View key={task.id} style={styles.taskItem}>
+              <Pressable
+                style={[
+                  styles.checkbox,
+                  task.completed && styles.checkboxCompleted,
+                ]}
+                onPress={() => handleToggleTask(task.id)}
+              >
+                {task.completed && (
+                  <Text style={styles.checkmark}>✓</Text>
+                )}
+              </Pressable>
+
+              <Pressable
+                style={styles.taskContent}
+                onPress={() => handleToggleTask(task.id)}
+              >
+                <Text
+                  style={[
+                    styles.taskTitle,
+                    task.completed && styles.taskCompleted,
+                  ]}
+                >
+                  {task.title}
+                </Text>
+
+                <Text style={styles.taskStatus}>
+                  {task.completed ? 'CLEANED UP' : 'NEEDS ATTENTION'}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.deleteButton}
+                onPress={() => handleDeleteTask(task.id)}
+              >
+                <Text style={styles.deleteButtonText}>×</Text>
+              </Pressable>
+            </View>
+          ))
+        )}
+      </View>
+
+      {/* RECENT ACTIVITY */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Recent Activity</Text>
+
+        {activities.length > 3 && (
+          <Pressable
+            onPress={() => setShowAllActivity(!showAllActivity)}
+          >
+            <Text style={styles.viewAll}>
+              {showAllActivity ? 'SHOW LESS' : 'VIEW ALL'}
+            </Text>
+          </Pressable>
+        )}
+      </View>
+
+      <View style={styles.activityCard}>
+        {visibleActivities.length === 0 ? (
+          <Text style={styles.emptyActivity}>
+            No activity yet.
+          </Text>
+        ) : (
+          visibleActivities.map((activity) => (
+            <ActivityItem
+              key={activity.id}
+              text={activity.text}
+            />
+          ))
+        )}
+      </View>
+
+      {/* QUICK ACTIONS */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Quick Actions</Text>
+      </View>
+
+      <View style={styles.quickActions}>
+        <Pressable
+          style={styles.actionButton}
+          onPress={() => setShowAddTask(true)}
+        >
+          <Text style={styles.actionIcon}>+</Text>
+          <Text style={styles.actionTitle}>Report a Mess</Text>
+          <Text style={styles.actionText}>
+            Add something that needs attention
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={styles.actionButton}
+          onPress={() =>
+            setActivePanel(
+              activePanel === 'settings' ? 'none' : 'settings'
+            )
+          }
+        >
+          <Text style={styles.actionIcon}>⚙</Text>
+          <Text style={styles.actionTitle}>Settings</Text>
+          <Text style={styles.actionText}>
+            Manage your dashboard
+          </Text>
+        </Pressable>
+      </View>
+
+      {/* PROFILE PANEL */}
+      {activePanel === 'profile' && (
+        <View style={styles.panelCard}>
+          <Text style={styles.panelTitle}>Profile</Text>
+
+          <View style={styles.profileCircle}>
+            <Text style={styles.profileLargeText}>P</Text>
+          </View>
+
+          <Text style={styles.profileName}>Neighborhood Helper</Text>
+
+          <Text style={styles.profileDescription}>
+            Ready to help keep the neighborhood clean,
+            safe, and organized.
+          </Text>
+
+          <Pressable
+            style={styles.closeButton}
+            onPress={() => setActivePanel('none')}
+          >
+            <Text style={styles.closeButtonText}>CLOSE</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {/* SETTINGS PANEL */}
+      {activePanel === 'settings' && (
+        <View style={styles.panelCard}>
+          <Text style={styles.panelTitle}>Settings</Text>
+
+          <View style={styles.settingRow}>
+            <View>
+              <Text style={styles.settingTitle}>
+                Dashboard Theme
+              </Text>
+
+              <Text style={styles.settingText}>
+                Red, blue, and white neighborhood theme
+              </Text>
+            </View>
+
+            <View style={styles.settingBadge}>
+              <Text style={styles.settingBadgeText}>ACTIVE</Text>
+            </View>
+          </View>
+
+          <View style={styles.settingRow}>
+            <View>
+              <Text style={styles.settingTitle}>
+                Task Tracking
+              </Text>
+
+              <Text style={styles.settingText}>
+                Track reported and completed problems
+              </Text>
+            </View>
+
+            <View style={styles.settingBadge}>
+              <Text style={styles.settingBadgeText}>ON</Text>
+            </View>
+          </View>
+
+          <Pressable
+            style={styles.closeButton}
+            onPress={() => setActivePanel('none')}
+          >
+            <Text style={styles.closeButtonText}>CLOSE</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {/* FOOTER */}
+      <View style={styles.footer}>
+        <Text style={styles.footerTitle}>Spotless</Text>
+
+        <Text style={styles.footerText}>
+          Helping keep the neighborhood clean, organized,
+          and ready for action.
+        </Text>
+
+        <Text style={styles.footerCopyright}>
+          CLEAN • REPORT • HELP
+        </Text>
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: '#F4F5F7',
+  },
+
+  content: {
     padding: 20,
     paddingBottom: 40,
+    maxWidth: 1100,
+    width: '100%',
+    alignSelf: 'center',
   },
 
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 25,
-  },
+  /* HEADER */
 
-  photoSection: {
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 25,
+    marginBottom: 24,
   },
 
-  profileImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    marginBottom: 15,
+  appName: {
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 2,
+    color: '#B91C2C',
+    textTransform: 'uppercase',
   },
 
-  placeholder: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: '#e5e5e5',
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#14213D',
+    marginTop: 3,
+  },
+
+  profileButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: '#174A8B',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 15,
   },
 
-  placeholderText: {
-    fontSize: 65,
+  profileButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '900',
   },
 
-  cameraButton: {
-    backgroundColor: '#333',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-  },
+  /* WELCOME */
 
-  cameraButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-
-  label: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 6,
-    marginTop: 12,
-  },
-
-  input: {
+  welcomeCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 24,
+    marginBottom: 28,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
+    borderColor: '#E4E6EA',
   },
 
-  bioInput: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-
-  saveButton: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 25,
-  },
-
-  saveButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-
-  buttonPressed: {
-    opacity: 0.6,
-    transform: [{ scale: 0.98 }],
-  },
-
-  savedContainer: {
-    marginTop: 25,
-    padding: 20,
-    borderRadius: 12,
-    backgroundColor: '#e8f5e9',
-    borderWidth: 1,
-    borderColor: '#81c784',
-  },
-
-  savedTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-
-  savedImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    alignSelf: 'center',
-    marginBottom: 15,
-  },
-
-  savedText: {
-    fontSize: 15,
+  welcomeSmall: {
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 1.5,
+    color: '#B91C2C',
     marginBottom: 8,
   },
 
-  bold: {
-    fontWeight: 'bold',
+  welcomeTitle: {
+    fontSize: 25,
+    fontWeight: '900',
+    color: '#14213D',
+    marginBottom: 10,
+  },
+
+  welcomeText: {
+    fontSize: 15,
+    lineHeight: 23,
+    color: '#616875',
+    maxWidth: 650,
+    marginBottom: 20,
+  },
+
+  primaryButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#B91C2C',
+    paddingHorizontal: 20,
+    paddingVertical: 13,
+    borderRadius: 10,
+  },
+
+  primaryButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '900',
+    fontSize: 13,
+    letterSpacing: 0.5,
+  },
+
+  /* SECTION */
+
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    marginTop: 4,
+  },
+
+  sectionTitle: {
+    fontSize: 19,
+    fontWeight: '900',
+    color: '#14213D',
+  },
+
+  taskCount: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#777E89',
+  },
+
+  viewAll: {
+    color: '#B91C2C',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+
+  /* METRICS */
+
+  metricsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 28,
+  },
+
+  metricCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#E4E6EA',
+    minHeight: 125,
+  },
+
+  metricLabel: {
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1,
+    color: '#777E89',
+    marginBottom: 8,
+  },
+
+  metricValue: {
+    fontSize: 30,
+    fontWeight: '900',
+    color: '#174A8B',
+    marginBottom: 4,
+  },
+
+  metricSubtitle: {
+    fontSize: 12,
+    color: '#777E89',
+  },
+
+  /* FORM */
+
+  formCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#E4E6EA',
+  },
+
+  formTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#14213D',
+    marginBottom: 5,
+  },
+
+  formDescription: {
+    fontSize: 13,
+    color: '#777E89',
+    marginBottom: 15,
+  },
+
+  input: {
+    backgroundColor: '#F4F5F7',
+    borderWidth: 1,
+    borderColor: '#D9DCE1',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    fontSize: 14,
+    color: '#14213D',
+    marginBottom: 14,
+  },
+
+  formButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+  },
+
+  cancelButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: '#D9DCE1',
+  },
+
+  cancelButtonText: {
+    color: '#555B66',
+    fontWeight: '800',
+    fontSize: 12,
+  },
+
+  saveButton: {
+    backgroundColor: '#174A8B',
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+    borderRadius: 9,
+  },
+
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '900',
+    fontSize: 12,
+  },
+
+  /* TASKS */
+
+  taskCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#E4E6EA',
+    marginBottom: 28,
+    overflow: 'hidden',
+  },
+
+  taskItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ECEDEF',
+  },
+
+  checkbox: {
+    width: 25,
+    height: 25,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: '#174A8B',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+
+  checkboxCompleted: {
+    backgroundColor: '#174A8B',
+  },
+
+  checkmark: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '900',
+  },
+
+  taskContent: {
+    flex: 1,
+  },
+
+  taskTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#14213D',
+    marginBottom: 5,
+  },
+
+  taskCompleted: {
+    textDecorationLine: 'line-through',
+    color: '#9297A0',
+  },
+
+  taskStatus: {
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.8,
+    color: '#B91C2C',
+  },
+
+  deleteButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#F4F5F7',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+
+  deleteButtonText: {
+    fontSize: 23,
+    color: '#777E89',
+    lineHeight: 24,
+  },
+
+  emptyState: {
+    padding: 30,
+    alignItems: 'center',
+  },
+
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#174A8B',
+    marginBottom: 5,
+  },
+
+  emptyText: {
+    textAlign: 'center',
+    fontSize: 13,
+    color: '#777E89',
+  },
+
+  /* ACTIVITY */
+
+  activityCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#E4E6EA',
+    paddingHorizontal: 18,
+    marginBottom: 28,
+  },
+
+  activityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ECEDEF',
+  },
+
+  activityDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#B91C2C',
+    marginRight: 12,
+  },
+
+  activityText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#555B66',
+  },
+
+  emptyActivity: {
+    paddingVertical: 20,
+    textAlign: 'center',
+    color: '#777E89',
+    fontSize: 13,
+  },
+
+  /* QUICK ACTIONS */
+
+  quickActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 28,
+  },
+
+  actionButton: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#E4E6EA',
+    padding: 18,
+  },
+
+  actionIcon: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#B91C2C',
+    marginBottom: 8,
+  },
+
+  actionTitle: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#14213D',
+    marginBottom: 5,
+  },
+
+  actionText: {
+    fontSize: 12,
+    color: '#777E89',
+    lineHeight: 18,
+  },
+
+  /* PANELS */
+
+  panelCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#E4E6EA',
+    padding: 22,
+    marginBottom: 28,
+  },
+
+  panelTitle: {
+    fontSize: 21,
+    fontWeight: '900',
+    color: '#14213D',
+    marginBottom: 18,
+  },
+
+  profileCircle: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#174A8B',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+
+  profileLargeText: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: '900',
+  },
+
+  profileName: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#14213D',
+    marginBottom: 5,
+  },
+
+  profileDescription: {
+    color: '#777E89',
+    fontSize: 13,
+    lineHeight: 20,
+    marginBottom: 18,
+  },
+
+  settingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ECEDEF',
+  },
+
+  settingTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#14213D',
+    marginBottom: 3,
+  },
+
+  settingText: {
+    fontSize: 12,
+    color: '#777E89',
+    maxWidth: 500,
+  },
+
+  settingBadge: {
+    backgroundColor: '#EAF0F8',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 7,
+  },
+
+  settingBadgeText: {
+    color: '#174A8B',
+    fontSize: 10,
+    fontWeight: '900',
+  },
+
+  closeButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#F4F5F7',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 18,
+  },
+
+  closeButtonText: {
+    color: '#555B66',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+
+  /* FOOTER */
+
+  footer: {
+    alignItems: 'center',
+    paddingTop: 10,
+    paddingBottom: 10,
+  },
+
+  footerTitle: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#14213D',
+    marginBottom: 5,
+  },
+
+  footerText: {
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#777E89',
+    maxWidth: 500,
+    lineHeight: 18,
+  },
+
+  footerCopyright: {
+    marginTop: 12,
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1.5,
+    color: '#B91C2C',
   },
 });
