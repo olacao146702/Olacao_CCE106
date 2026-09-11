@@ -1,327 +1,447 @@
-import * as ImagePicker from 'expo-image-picker';
-import React, { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React from 'react';
 import {
-  Alert,
-  Image,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 
-export default function ProfileScreen() {
-  const [name, setName] = useState('');
-  const [program, setProgram] = useState('');
-  const [bio, setBio] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+const courses = [
+  {
+    id: '2013',
+    code: 'CCE106',
+    name: 'APPLICATION DEVELOPMENT AND EMERGING TECHNOLOGIES',
+    units: 3,
+  },
+  {
+    id: '2018',
+    code: 'IT12',
+    name: 'SYSTEMS INTEGRATION & ARCHITECTURE',
+    units: 3,
+  },
+  {
+    id: '2039',
+    code: 'IT13',
+    name: 'PROFESSIONAL TRACK FOR IT 4',
+    units: 3,
+  },
+];
 
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
-
-  // Open camera
-  const takePhoto = async () => {
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
-
-    if (!permission.granted) {
-      Alert.alert(
-        'Camera Permission',
-        'Please allow camera access to take a profile photo.'
-      );
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
-      setSaved(false);
-    }
-  };
-
-  // Save profile
-  const saveProfile = () => {
-    if (!name.trim() || !program.trim()) {
-      Alert.alert(
-        'Missing Information',
-        'Please enter your full name and program.'
-      );
-      return;
-    }
-
-    setSaved(true);
-
-    Alert.alert(
-      'Profile Saved',
-      'Your profile information has been saved.'
-    );
-  };
-
+export default function HomeScreen() {
   return (
     <ScrollView
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
     >
-      <Text style={styles.title}>Personal Profile</Text>
-
-      {/* PROFILE PHOTO */}
-      <View style={styles.photoSection}>
-        {profileImage ? (
-          <Image
-            source={{ uri: profileImage }}
-            style={styles.profileImage}
+      {/* WELCOME */}
+      <View style={styles.welcomeCard}>
+        <View style={styles.welcomeIcon}>
+          <Ionicons
+            name="school-outline"
+            size={30}
+            color="#FFFFFF"
           />
-        ) : (
-          <View style={styles.placeholder}>
-            <Text style={styles.placeholderText}>👤</Text>
-          </View>
-        )}
+        </View>
 
-        <Pressable
-          onPress={takePhoto}
-          style={({ pressed }) => [
-            styles.cameraButton,
-            pressed && styles.buttonPressed,
-          ]}
-        >
-          <Text style={styles.cameraButtonText}>
-            {profileImage ? '📷 RETAKE PHOTO' : '📷 TAKE PROFILE PHOTO'}
+        <View style={styles.welcomeText}>
+          <Text style={styles.welcomeSmall}>
+            WELCOME BACK
           </Text>
-        </Pressable>
+
+          <Text style={styles.welcomeName}>
+            Student
+          </Text>
+
+          <Text style={styles.welcomeDescription}>
+            Here's your student portal overview.
+          </Text>
+        </View>
       </View>
 
-      {/* NAME */}
-      <Text style={styles.label}>Full Name *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your full name"
-        value={name}
-        onChangeText={setName}
-      />
+      {/* SUMMARY */}
+      <Text style={styles.sectionTitle}>
+        Student Summary
+      </Text>
 
-      {/* PROGRAM */}
-      <Text style={styles.label}>Program *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your program"
-        value={program}
-        onChangeText={setProgram}
-      />
+      <View style={styles.summaryCard}>
+        <View style={styles.summaryRow}>
+          <Ionicons
+            name="person-outline"
+            size={21}
+            color="#123B5D"
+          />
 
-      {/* BIO */}
-      <Text style={styles.label}>Biography</Text>
-      <TextInput
-        style={[styles.input, styles.bioInput]}
-        placeholder="Tell something about yourself"
-        value={bio}
-        onChangeText={setBio}
-        multiline
-      />
-
-      {/* EMAIL */}
-      <Text style={styles.label}>Email</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-
-      {/* PHONE */}
-      <Text style={styles.label}>Contact Number</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your contact number"
-        value={phone}
-        onChangeText={setPhone}
-        keyboardType="phone-pad"
-      />
-
-      {/* SAVE BUTTON */}
-      <Pressable
-        onPress={saveProfile}
-        style={({ pressed }) => [
-          styles.saveButton,
-          pressed && styles.buttonPressed,
-        ]}
-      >
-        <Text style={styles.saveButtonText}>SAVE PROFILE</Text>
-      </Pressable>
-
-      {/* SAVED RESULT */}
-      {saved && (
-        <View style={styles.savedContainer}>
-          <Text style={styles.savedTitle}>✓ PROFILE SAVED</Text>
-
-          {profileImage && (
-            <Image
-              source={{ uri: profileImage }}
-              style={styles.savedImage}
-            />
-          )}
-
-          <Text style={styles.savedText}>
-            <Text style={styles.bold}>Name:</Text> {name}
-          </Text>
-
-          <Text style={styles.savedText}>
-            <Text style={styles.bold}>Program:</Text> {program}
-          </Text>
-
-          {bio !== '' && (
-            <Text style={styles.savedText}>
-              <Text style={styles.bold}>Bio:</Text> {bio}
+          <View>
+            <Text style={styles.label}>
+              Student Name
             </Text>
-          )}
 
-          {email !== '' && (
-            <Text style={styles.savedText}>
-              <Text style={styles.bold}>Email:</Text> {email}
+            <Text style={styles.value}>
+              Jade H. Olacao 
             </Text>
-          )}
-
-          {phone !== '' && (
-            <Text style={styles.savedText}>
-              <Text style={styles.bold}>Contact:</Text> {phone}
-            </Text>
-          )}
+          </View>
         </View>
-      )}
+
+        <View style={styles.divider} />
+
+        <View style={styles.summaryRow}>
+          <Ionicons
+            name="id-card-outline"
+            size={21}
+            color="#123B5D"
+          />
+
+          <View>
+            <Text style={styles.label}>
+              Student ID
+            </Text>
+
+            <Text style={styles.value}>
+              146702
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.divider} />
+
+        <View style={styles.summaryRow}>
+          <Ionicons
+            name="book-outline"
+            size={21}
+            color="#123B5D"
+          />
+
+          <View>
+            <Text style={styles.label}>
+              Program
+            </Text>
+
+            <Text style={styles.value}>
+              DCE
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* STATISTICS */}
+      <View style={styles.statsRow}>
+        <View style={styles.statCard}>
+          <Ionicons
+            name="library-outline"
+            size={25}
+            color="#123B5D"
+          />
+
+          <Text style={styles.statNumber}>
+            3
+          </Text>
+
+          <Text style={styles.statLabel}>
+            Courses
+          </Text>
+        </View>
+
+        <View style={styles.statCard}>
+          <Ionicons
+            name="school-outline"
+            size={25}
+            color="#123B5D"
+          />
+
+          <Text style={styles.statNumber}>
+            9
+          </Text>
+
+          <Text style={styles.statLabel}>
+            Units
+          </Text>
+        </View>
+      </View>
+
+      {/* COURSES */}
+      <Text style={styles.sectionTitle}>
+        My Courses
+      </Text>
+
+      {courses.map((course) => (
+        <TouchableOpacity
+          key={course.id}
+          style={styles.courseCard}
+          activeOpacity={0.8}
+          onPress={() =>
+            router.push({
+              pathname: '/course/[id]' as any,
+              params: {
+                id: course.id,
+              },
+            })
+          }
+        >
+          <View style={styles.courseIcon}>
+            <Ionicons
+              name="book-outline"
+              size={24}
+              color="#123B5D"
+            />
+          </View>
+
+          <View style={styles.courseInfo}>
+            <Text style={styles.courseCode}>
+              {course.code}
+            </Text>
+
+            <Text style={styles.courseName}>
+              {course.name}
+            </Text>
+
+            <Text style={styles.courseUnits}>
+              {course.units} Units
+            </Text>
+          </View>
+
+          <Ionicons
+            name="chevron-forward"
+            size={22}
+            color="#8A96A3"
+          />
+        </TouchableOpacity>
+      ))}
+
+      {/* QUICK ACCESS */}
+      <Text style={styles.sectionTitle}>
+        Quick Access
+      </Text>
+
+      <TouchableOpacity
+        style={styles.quickButton}
+        activeOpacity={0.8}
+        onPress={() =>
+          router.push({
+            pathname: '/student/[id]' as any,
+            params: {
+              id: '2026-0001',
+            },
+          })
+        }
+      >
+        <Ionicons
+          name="person-circle-outline"
+          size={24}
+          color="#FFFFFF"
+        />
+
+        <View style={styles.quickText}>
+          <Text style={styles.quickTitle}>
+            Student Details
+          </Text>
+
+          <Text style={styles.quickDescription}>
+            View your student information
+          </Text>
+        </View>
+
+        <Ionicons
+          name="chevron-forward"
+          size={21}
+          color="#FFFFFF"
+        />
+      </TouchableOpacity>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: '#F4F7FA',
+  },
+
+  content: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 35,
   },
 
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 25,
-  },
-
-  photoSection: {
+  welcomeCard: {
+    backgroundColor: '#123B5D',
+    borderRadius: 18,
+    padding: 20,
+    flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 25,
   },
 
-  profileImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    marginBottom: 15,
-  },
-
-  placeholder: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: '#e5e5e5',
+  welcomeIcon: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: '#285879',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 15,
+    marginRight: 15,
   },
 
-  placeholderText: {
-    fontSize: 65,
+  welcomeText: {
+    flex: 1,
   },
 
-  cameraButton: {
-    backgroundColor: '#333',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 10,
+  welcomeSmall: {
+    color: '#BFD3E2',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
 
-  cameraButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
+  welcomeName: {
+    color: '#FFFFFF',
+    fontSize: 25,
+    fontWeight: '800',
+    marginTop: 2,
+  },
+
+  welcomeDescription: {
+    color: '#DCE8F0',
+    fontSize: 13,
+    marginTop: 4,
+  },
+
+  sectionTitle: {
+    fontSize: 19,
+    fontWeight: '800',
+    color: '#172B3A',
+    marginBottom: 12,
+    marginTop: 4,
+  },
+
+  summaryCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 17,
+    marginBottom: 18,
+    elevation: 2,
+  },
+
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
 
   label: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 6,
-    marginTop: 12,
+    color: '#7B8791',
+    fontSize: 12,
+    marginBottom: 2,
   },
 
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
-  },
-
-  bioInput: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-
-  saveButton: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 25,
-  },
-
-  saveButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-
-  buttonPressed: {
-    opacity: 0.6,
-    transform: [{ scale: 0.98 }],
-  },
-
-  savedContainer: {
-    marginTop: 25,
-    padding: 20,
-    borderRadius: 12,
-    backgroundColor: '#e8f5e9',
-    borderWidth: 1,
-    borderColor: '#81c784',
-  },
-
-  savedTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-
-  savedImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    alignSelf: 'center',
-    marginBottom: 15,
-  },
-
-  savedText: {
+  value: {
+    color: '#172B3A',
     fontSize: 15,
-    marginBottom: 8,
+    fontWeight: '700',
   },
 
-  bold: {
-    fontWeight: 'bold',
+  divider: {
+    height: 1,
+    backgroundColor: '#E7ECF0',
+    marginVertical: 13,
+  },
+
+  statsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 23,
+  },
+
+  statCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 16,
+    alignItems: 'center',
+    elevation: 2,
+  },
+
+  statNumber: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#172B3A',
+    marginTop: 5,
+  },
+
+  statLabel: {
+    color: '#7B8791',
+    fontSize: 12,
+    marginTop: 2,
+  },
+
+  courseCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 11,
+    elevation: 2,
+  },
+
+  courseIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#E8F1F7',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 13,
+  },
+
+  courseInfo: {
+    flex: 1,
+  },
+
+  courseCode: {
+    color: '#123B5D',
+    fontSize: 12,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+
+  courseName: {
+    color: '#172B3A',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 19,
+  },
+
+  courseUnits: {
+    color: '#8A96A3',
+    fontSize: 12,
+    marginTop: 3,
+  },
+
+  quickButton: {
+    backgroundColor: '#123B5D',
+    borderRadius: 15,
+    padding: 17,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  quickText: {
+    flex: 1,
+    marginLeft: 12,
+  },
+
+  quickTitle: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+
+  quickDescription: {
+    color: '#C7D7E2',
+    fontSize: 12,
+    marginTop: 2,
   },
 });
