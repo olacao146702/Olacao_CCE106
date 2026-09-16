@@ -1,327 +1,278 @@
-import * as ImagePicker from 'expo-image-picker';
-import React, { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Link, useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
-  Alert,
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 
-export default function ProfileScreen() {
-  const [name, setName] = useState('');
-  const [program, setProgram] = useState('');
-  const [bio, setBio] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+import StatCard from '../../components/StatCard';
 
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+import {
+  defaultTasks,
+  Task,
+  TASKS_STORAGE_KEY,
+} from '../../data/tasks';
 
-  // Open camera
-  const takePhoto = async () => {
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
+export default function Dashboard() {
+  const router = useRouter();
 
-    if (!permission.granted) {
-      Alert.alert(
-        'Camera Permission',
-        'Please allow camera access to take a profile photo.'
+  const [tasks, setTasks] = useState<Task[]>([]);
+
+  const loadTasks = async () => {
+    try {
+      const savedTasks = await AsyncStorage.getItem(
+        TASKS_STORAGE_KEY
       );
-      return;
-    }
 
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
+      if (savedTasks) {
+        setTasks(JSON.parse(savedTasks) as Task[]);
+      } else {
+        setTasks(defaultTasks);
 
-    if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
-      setSaved(false);
+        await AsyncStorage.setItem(
+          TASKS_STORAGE_KEY,
+          JSON.stringify(defaultTasks)
+        );
+      }
+    } catch (error) {
+      console.log('Error loading dashboard tasks:', error);
+      setTasks(defaultTasks);
     }
   };
 
-  // Save profile
-  const saveProfile = () => {
-    if (!name.trim() || !program.trim()) {
-      Alert.alert(
-        'Missing Information',
-        'Please enter your full name and program.'
-      );
-      return;
-    }
+  // Reload dashboard whenever the screen becomes active
+  useFocusEffect(
+    useCallback(() => {
+      loadTasks();
+    }, [])
+  );
 
-    setSaved(true);
+  const totalTasks = tasks.length;
 
-    Alert.alert(
-      'Profile Saved',
-      'Your profile information has been saved.'
-    );
-  };
+  const completedTasks = tasks.filter(
+    (task) => task.status === 'Completed'
+  ).length;
+
+  const pendingTasks = tasks.filter(
+    (task) => task.status === 'Pending'
+  ).length;
 
   return (
     <ScrollView
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
+      style={styles.container}
+      contentContainerStyle={styles.content}
     >
-      <Text style={styles.title}>Personal Profile</Text>
+      <View style={styles.header}>
+        <Text style={styles.appTitle}>StudyFlow</Text>
 
-      {/* PROFILE PHOTO */}
-      <View style={styles.photoSection}>
-        {profileImage ? (
-          <Image
-            source={{ uri: profileImage }}
-            style={styles.profileImage}
-          />
-        ) : (
-          <View style={styles.placeholder}>
-            <Text style={styles.placeholderText}>👤</Text>
-          </View>
-        )}
-
-        <Pressable
-          onPress={takePhoto}
-          style={({ pressed }) => [
-            styles.cameraButton,
-            pressed && styles.buttonPressed,
-          ]}
-        >
-          <Text style={styles.cameraButtonText}>
-            {profileImage ? '📷 RETAKE PHOTO' : '📷 TAKE PROFILE PHOTO'}
-          </Text>
-        </Pressable>
+        <Text style={styles.subtitle}>
+          Student Task Planner
+        </Text>
       </View>
 
-      {/* NAME */}
-      <Text style={styles.label}>Full Name *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your full name"
-        value={name}
-        onChangeText={setName}
-      />
+      <View style={styles.welcomeCard}>
+        <Text style={styles.welcomeSmall}>
+          Welcome back,
+        </Text>
 
-      {/* PROGRAM */}
-      <Text style={styles.label}>Program *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your program"
-        value={program}
-        onChangeText={setProgram}
-      />
+        <Text style={styles.studentName}>
+          Student!
+        </Text>
 
-      {/* BIO */}
-      <Text style={styles.label}>Biography</Text>
-      <TextInput
-        style={[styles.input, styles.bioInput]}
-        placeholder="Tell something about yourself"
-        value={bio}
-        onChangeText={setBio}
-        multiline
-      />
+        <Text style={styles.welcomeMessage}>
+          Stay organized and keep your schoolwork moving.
+        </Text>
+      </View>
 
-      {/* EMAIL */}
-      <Text style={styles.label}>Email</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+      <Text style={styles.sectionTitle}>
+        Your Progress
+      </Text>
 
-      {/* PHONE */}
-      <Text style={styles.label}>Contact Number</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your contact number"
-        value={phone}
-        onChangeText={setPhone}
-        keyboardType="phone-pad"
-      />
+      <View style={styles.statsRow}>
+        <StatCard
+          label="Total Tasks"
+          value={totalTasks}
+        />
 
-      {/* SAVE BUTTON */}
+        <StatCard
+          label="Completed"
+          value={completedTasks}
+        />
+
+        <StatCard
+          label="Pending"
+          value={pendingTasks}
+        />
+      </View>
+
+      <Text style={styles.sectionTitle}>
+        Quick Actions
+      </Text>
+
       <Pressable
-        onPress={saveProfile}
+        onPress={() => router.push('/(tabs)/tasks')}
         style={({ pressed }) => [
-          styles.saveButton,
+          styles.actionButton,
           pressed && styles.buttonPressed,
         ]}
       >
-        <Text style={styles.saveButtonText}>SAVE PROFILE</Text>
+        <Text style={styles.actionButtonText}>
+          View My Tasks
+        </Text>
       </Pressable>
 
-      {/* SAVED RESULT */}
-      {saved && (
-        <View style={styles.savedContainer}>
-          <Text style={styles.savedTitle}>✓ PROFILE SAVED</Text>
-
-          {profileImage && (
-            <Image
-              source={{ uri: profileImage }}
-              style={styles.savedImage}
-            />
-          )}
-
-          <Text style={styles.savedText}>
-            <Text style={styles.bold}>Name:</Text> {name}
+      <Link href="/(tabs)/profile" asChild>
+        <Pressable
+          style={({ pressed }) => [
+            styles.secondaryButton,
+            pressed && styles.buttonPressed,
+          ]}
+        >
+          <Text style={styles.secondaryButtonText}>
+            Edit Profile
           </Text>
+        </Pressable>
+      </Link>
 
-          <Text style={styles.savedText}>
-            <Text style={styles.bold}>Program:</Text> {program}
-          </Text>
+      <View style={styles.infoBox}>
+        <Text style={styles.infoTitle}>
+          Keep Going
+        </Text>
 
-          {bio !== '' && (
-            <Text style={styles.savedText}>
-              <Text style={styles.bold}>Bio:</Text> {bio}
-            </Text>
-          )}
-
-          {email !== '' && (
-            <Text style={styles.savedText}>
-              <Text style={styles.bold}>Email:</Text> {email}
-            </Text>
-          )}
-
-          {phone !== '' && (
-            <Text style={styles.savedText}>
-              <Text style={styles.bold}>Contact:</Text> {phone}
-            </Text>
-          )}
-        </View>
-      )}
+        <Text style={styles.infoText}>
+          Complete your pending tasks to stay on track with
+          your studies.
+        </Text>
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+
+  content: {
     padding: 20,
     paddingBottom: 40,
   },
 
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 25,
+  header: {
+    marginBottom: 20,
   },
 
-  photoSection: {
-    alignItems: 'center',
-    marginBottom: 25,
+  appTitle: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#dc2626',
   },
 
-  profileImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    marginBottom: 15,
+  subtitle: {
+    marginTop: 2,
+    fontSize: 14,
+    color: '#475569',
+    fontWeight: '600',
   },
 
-  placeholder: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: '#e5e5e5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 15,
+  welcomeCard: {
+    backgroundColor: '#1d4ed8',
+    borderRadius: 18,
+    padding: 22,
+    marginBottom: 24,
   },
 
-  placeholderText: {
-    fontSize: 65,
-  },
-
-  cameraButton: {
-    backgroundColor: '#333',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-  },
-
-  cameraButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+  welcomeSmall: {
+    color: '#dbeafe',
     fontSize: 14,
   },
 
-  label: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 6,
-    marginTop: 12,
+  studentName: {
+    color: '#ffffff',
+    fontSize: 27,
+    fontWeight: '800',
+    marginTop: 3,
   },
 
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
+  welcomeMessage: {
+    color: '#dbeafe',
+    fontSize: 14,
+    lineHeight: 21,
+    marginTop: 8,
   },
 
-  bioInput: {
-    height: 100,
-    textAlignVertical: 'top',
+  sectionTitle: {
+    fontSize: 19,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginBottom: 10,
   },
 
-  saveButton: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
+  statsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -5,
+    marginBottom: 24,
+  },
+
+  actionButton: {
+    backgroundColor: '#dc2626',
+    borderRadius: 12,
+    paddingVertical: 15,
     alignItems: 'center',
-    marginTop: 25,
+    marginBottom: 10,
   },
 
-  saveButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+  secondaryButton: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    paddingVertical: 15,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
   },
 
   buttonPressed: {
-    opacity: 0.6,
+    opacity: 0.65,
     transform: [{ scale: 0.98 }],
   },
 
-  savedContainer: {
-    marginTop: 25,
-    padding: 20,
-    borderRadius: 12,
-    backgroundColor: '#e8f5e9',
-    borderWidth: 1,
-    borderColor: '#81c784',
-  },
-
-  savedTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-
-  savedImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    alignSelf: 'center',
-    marginBottom: 15,
-  },
-
-  savedText: {
+  actionButtonText: {
+    color: '#ffffff',
     fontSize: 15,
-    marginBottom: 8,
+    fontWeight: '800',
   },
 
-  bold: {
-    fontWeight: 'bold',
+  secondaryButtonText: {
+    color: '#1d4ed8',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+
+  infoBox: {
+    backgroundColor: '#eff6ff',
+    borderRadius: 14,
+    padding: 16,
+    marginTop: 24,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+  },
+
+  infoTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#1e3a8a',
+  },
+
+  infoText: {
+    marginTop: 5,
+    color: '#475569',
+    lineHeight: 20,
+    fontSize: 13,
   },
 });
