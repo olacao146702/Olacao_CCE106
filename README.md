@@ -1,50 +1,59 @@
-# Welcome to your Expo app 👋
+# Secure Profile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Student Information
 
-## Get started
+**Name:** JADE OLACAO
+**Section:** CCE106
 
-1. Install dependencies
+## Description
 
-   ```bash
-   npm install
-   ```
+Secure Profile is an Expo React Native application that demonstrates API authentication and secure access-token handling. The app uses DummyJSON for authentication and retrieves a protected user profile after login.
 
-2. Start the app
+## Features
 
-   ```bash
-   npx expo start
-   ```
+* User login using DummyJSON API
+* Secure access-token storage using Expo SecureStore
+* Protected profile request using a Bearer token
+* Session restoration after app reload
+* Logout and token deletion
+* Login error handling
+* Loading and authenticated states
 
-In the output, you'll find options to open the app in a
+## Installation
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+Install the project dependencies:
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Install Expo SecureStore:
 
-## Learn more
+```bash
+npx expo install expo-secure-store
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## Run
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Start the Expo development server:
 
-## Join the community
+```bash
+npx expo start
+```
 
-Join our community of developers creating universal apps.
+Open the application on an Android or iOS device.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Test Account
+
+This project uses the public DummyJSON practice account provided for the laboratory:
+
+**Username:** emilys
+**Password:** emilyspass
+
+## Security
+
+The access token is stored using Expo SecureStore. The token is not hard-coded or displayed in the application or console. Protected API requests send the token using the Authorization Bearer scheme. The stored token is deleted when the user logs out.
+
+## API
+
+The application uses the DummyJSON authentication API for practice purposes.
