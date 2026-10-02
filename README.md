@@ -4,11 +4,11 @@
 
 ### Student Information
 
-Name:
+Name: Jade H. Olacao
 
-Section:
+Section: CCE106 2013
 
-Date:
+Date:10/02/26
 
 ### Required Features
 
