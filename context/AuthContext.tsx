@@ -20,7 +20,9 @@ type AuthContextValue = {
   restoreSession: () => Promise<void>;
 };
 
-export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+export const AuthContext = createContext<AuthContextValue | undefined>(
+  undefined
+);
 
 const TOKEN_KEY = 'student_service_portal_token';
 
@@ -35,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('No access token was provided.');
       }
 
-      // SecureStore is available on native platforms.
+      // SecureStore is used only on native platforms.
       // The password is never stored.
       if (Platform.OS !== 'web') {
         await SecureStore.setItemAsync(TOKEN_KEY, accessToken);
@@ -81,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // Validate the saved token with the protected profile endpoint.
       const response = await fetch(`${API_BASE_URL}/profile`, {
         method: 'GET',
         headers: {
@@ -89,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
 
+      // Saved token is invalid or expired.
       if (response.status === 401) {
         await SecureStore.deleteItemAsync(TOKEN_KEY);
         setToken(null);
@@ -97,10 +101,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (!response.ok) {
-        throw new Error(`Profile request failed with status ${response.status}.`);
+        throw new Error(
+          `Profile request failed with status ${response.status}.`
+        );
       }
 
-      const profileData = await response.json();
+      const data = await response.json();
+
+      // Your API returns:
+      // { user: { id, name, email, role, ... } }
+      const profileData: User =
+        data?.user ??
+        data?.profile ??
+        data;
 
       setToken(savedToken);
       setUser(profileData);
@@ -114,7 +127,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           await SecureStore.deleteItemAsync(TOKEN_KEY);
         } catch (storageError) {
-          console.error('Unable to clear invalid session:', storageError);
+          console.error(
+            'Unable to clear invalid session:',
+            storageError
+          );
         }
       }
     } finally {
@@ -126,8 +142,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     restoreSession();
   }, []);
 
-  // SecureStore is native-only. The web skeleton makes no storage calls.
-  // TODO EXAM: Check platform availability before storage calls; test persistence on Android/iOS.
+  // SecureStore is native-only.
+  // TODO EXAM: Test persistence on Android/iOS.
+
   return (
     <AuthContext.Provider
       value={{

@@ -1,0 +1,45 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "email": "jade@email.com",
+      "password": "olacao",
+      "name": "Jade Olacao",
+      "role": "student"
+    }
+  ],
+  "students": [
+    {
+      "id": 1,
+      "name": "Jade Olacao",
+      "email": "jade@email.com",
+      "course": "BS Information Technology",
+      "year": "2nd Year",
+      "section": "CCE106"
+    },
+    {
+      "id": 2,
+      "name": "John Denver Descartin",
+      "email": "john@email.com",
+      "course": "BS Information Technology",
+      "year": "2nd Year",
+      "section": "CCE106"
+    },
+    {
+      "id": 3,
+      "name": "Mike Airon IRoy",
+      "email": "mike@email.com",
+      "course": "BS Information Technology",
+      "year": "3rd Year",
+      "section": "CCE106"
+    },
+    {
+      "id": 4,
+      "name": "Lhindex Khim Gamones",
+      "email": "khim@email.com",
+      "course": "BS Information Systems",
+      "year": "1st Year",
+      "section": "CCS101"
+    }
+  ]
+}

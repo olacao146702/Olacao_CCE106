@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -9,10 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import StudentCard, {
-  type Student,
-} from '@/components/StudentCard';
-
+import StudentCard, { Student } from '@/components/StudentCard';
 import { API_BASE_URL } from '@/constants/api';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -20,32 +17,23 @@ export default function StudentsScreen() {
   const { token, logout } = useAuth();
 
   const [students, setStudents] = useState<Student[]>([]);
+  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
 
-  const loadStudents = async () => {
-    // TODO EXAM: 1. Set loading and clear previous errors.
-    // TODO EXAM: 2. Call GET /students using fetch() and async/await.
-    // TODO EXAM: 3. Include Authorization: Bearer TOKEN from useAuth() if required.
-    // TODO EXAM: 4. Check response.ok and handle 401 Unauthorized.
-    // TODO EXAM: 5. Parse JSON and save the student array to state.
-    // TODO EXAM: 6. Handle errors and stop loading inside finally.
-
+  const loadStudents = useCallback(async () => {
     if (!token) {
-      setError('You are not authenticated.');
+      setStudents([]);
       setLoading(false);
       return;
     }
 
-    setLoading(true);
-    setError('');
-
     try {
+      setLoading(true);
+      setError('');
+
       const response = await fetch(`${API_BASE_URL}/students`, {
-        method: 'GET',
         headers: {
-          Accept: 'application/json',
           Authorization: `Bearer ${token}`,
         },
       });
@@ -55,97 +43,109 @@ export default function StudentsScreen() {
         return;
       }
 
-      if (!response.ok) {
-        throw new Error(
-          `Unable to load students. Server returned ${response.status}.`
-        );
-      }
-
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.message || 'Failed to load students.');
+      }
 
       const studentList = Array.isArray(data)
         ? data
         : data?.students ?? data?.data ?? [];
-
-      if (!Array.isArray(studentList)) {
-        throw new Error('Invalid student data returned by the server.');
-      }
 
       setStudents(studentList);
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
-          : 'Unable to load students.'
+          : 'Something went wrong while loading students.'
       );
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, logout]);
 
   useEffect(() => {
-    // TODO EXAM: Call loadStudents() when the screen loads.
     loadStudents();
-  }, [token]);
+  }, [loadStudents]);
 
-  // TODO EXAM: Use filter() to return students whose name matches the search text.
-  const filteredStudents = students.filter((student) =>
-    (student.name ?? '')
-      .toLowerCase()
-      .includes(search.trim().toLowerCase())
-  );
+  const filteredStudents = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+
+    if (!keyword) {
+      return students;
+    }
+
+    return students.filter((student) =>
+      `${student.name ?? ''} ${student.email ?? ''} ${
+        student.course ?? ''
+      }`
+        .toLowerCase()
+        .includes(keyword)
+    );
+  }, [students, search]);
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" />
+        <Text style={styles.message}>Loading students...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.error}>{error}</Text>
+
+        <Pressable style={styles.retryButton} onPress={loadStudents}>
+          <Text style={styles.retryText}>Retry</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Students</Text>
 
+      <Text style={styles.subtitle}>
+        Browse and search student records.
+      </Text>
+
       <TextInput
-        style={styles.input}
-        accessibilityLabel="Search students"
-        placeholder="Search by name"
         value={search}
         onChangeText={setSearch}
+        placeholder="Search students..."
+        placeholderTextColor="#8795a8"
+        style={styles.search}
       />
 
-      {loading ? (
-        <View style={styles.state}>
-          <ActivityIndicator color="#245bb2" />
-          <Text style={styles.text}>
-            Loading students…
+      {filteredStudents.length === 0 ? (
+        <View style={styles.empty}>
+          <Text style={styles.emptyTitle}>
+            {students.length === 0
+              ? 'No students available.'
+              : 'No matching students.'}
           </Text>
-        </View>
-      ) : error ? (
-        <View
-          style={styles.state}
-          accessibilityLiveRegion="polite"
-        >
-          <Text style={styles.error}>{error}</Text>
 
-          <Pressable
-            accessibilityRole="button"
-            onPress={loadStudents}
-          >
-            <Text style={styles.link}>Try Again</Text>
-          </Pressable>
+          <Text style={styles.emptyText}>
+            Try another search term.
+          </Text>
         </View>
       ) : (
         <FlatList
           data={filteredStudents}
           keyExtractor={(item, index) =>
-            String(item.id ?? index)
+            item.id !== undefined
+              ? String(item.id)
+              : String(index)
           }
           renderItem={({ item }) => (
             <StudentCard student={item} />
           )}
-          ListEmptyComponent={
-            <View style={styles.state}>
-              <Text style={styles.text}>
-                {search.trim()
-                  ? 'No students match your search.'
-                  : 'No students found.'}
-              </Text>
-            </View>
-          }
+          contentContainerStyle={styles.list}
         />
       )}
     </View>
@@ -155,39 +155,85 @@ export default function StudentsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 24,
     backgroundColor: '#f2f5fa',
+    padding: 20,
   },
+
   title: {
+    color: '#17324d',
     fontSize: 28,
     fontWeight: '700',
-    color: '#17324d',
-    marginBottom: 20,
   },
-  input: {
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#c6d2e1',
-    borderRadius: 8,
-    backgroundColor: '#ffffff',
-    color: '#17324d',
-    marginBottom: 20,
-  },
-  state: {
-    padding: 24,
-    gap: 12,
-    alignItems: 'center',
-  },
-  text: {
+
+  subtitle: {
     color: '#536579',
+    fontSize: 15,
+    marginTop: 4,
+    marginBottom: 16,
   },
+
+  search: {
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#17324d',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#dce3ec',
+  },
+
+  list: {
+    paddingBottom: 20,
+  },
+
+  center: {
+    flex: 1,
+    backgroundColor: '#f2f5fa',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+
+  message: {
+    color: '#536579',
+    marginTop: 12,
+  },
+
   error: {
     color: '#b42318',
     textAlign: 'center',
+    marginBottom: 16,
   },
-  link: {
-    color: '#245bb2',
-    padding: 12,
+
+  retryButton: {
+    backgroundColor: '#245bb2',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+
+  retryText: {
+    color: '#ffffff',
     fontWeight: '600',
+  },
+
+  empty: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 24,
+    alignItems: 'center',
+  },
+
+  emptyTitle: {
+    color: '#17324d',
+    fontSize: 17,
+    fontWeight: '600',
+  },
+
+  emptyText: {
+    color: '#536579',
+    marginTop: 6,
   },
 });

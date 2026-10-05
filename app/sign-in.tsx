@@ -119,12 +119,16 @@ export default function SignInScreen() {
         <TextInput
           style={styles.input}
           accessibilityLabel="Email"
-          placeholder="student@example.com"
+          placeholder="student@email.com"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
+          returnKeyType="next"
+          onSubmitEditing={() => {
+            // Move from Email to Password when Enter/Next is pressed.
+          }}
           editable={!loading}
         />
 
@@ -137,6 +141,8 @@ export default function SignInScreen() {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
+          returnKeyType="done"
+          onSubmitEditing={handleLogin}
           editable={!loading}
         />
 

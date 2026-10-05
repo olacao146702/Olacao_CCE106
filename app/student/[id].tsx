@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -17,24 +17,22 @@ import { type Student } from '@/components/StudentCard';
 import { API_BASE_URL } from '@/constants/api';
 import { useAuth } from '@/hooks/useAuth';
 
+type StudentDetails = Student & {
+  year?: string | null;
+  section?: string | null;
+};
+
 export default function StudentDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
   const { token, logout } = useAuth();
 
-  const [student, setStudent] = useState<Student | null>(null);
+  const [student, setStudent] = useState<StudentDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const loadStudent = async () => {
-    // TODO EXAM: Validate the id read from useLocalSearchParams().
-    // TODO EXAM: Set loading and clear previous errors.
-    // TODO EXAM: GET /students/{id} with fetch(), async/await, and a Bearer token.
-    // TODO EXAM: Check response.ok; handle 401 Unauthorized and missing records.
-    // TODO EXAM: Parse JSON and update student state.
-    // TODO EXAM: Handle errors and stop loading in finally.
-
+  const loadStudent = useCallback(async () => {
     setLoading(true);
     setError('');
     setStudent(null);
@@ -83,13 +81,15 @@ export default function StudentDetailsScreen() {
 
       const data = await response.json();
 
-      const studentData: Student =
+      const studentData: StudentDetails =
         data?.student ??
         data?.data ??
         data;
 
       if (!studentData || typeof studentData !== 'object') {
-        throw new Error('Invalid student data returned by the server.');
+        throw new Error(
+          'Invalid student data returned by the server.'
+        );
       }
 
       setStudent(studentData);
@@ -102,12 +102,11 @@ export default function StudentDetailsScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, token, logout]);
 
   useEffect(() => {
-    // TODO EXAM: Call loadStudent() when id changes.
     loadStudent();
-  }, [id, token]);
+  }, [loadStudent]);
 
   const studentId = Array.isArray(id) ? id[0] : id;
 
@@ -161,6 +160,14 @@ export default function StudentDetailsScreen() {
 
           <Text style={styles.text}>
             Course: {student.course || '—'}
+          </Text>
+
+          <Text style={styles.text}>
+            Year: {student.year || '—'}
+          </Text>
+
+          <Text style={styles.text}>
+            Section: {student.section || '—'}
           </Text>
         </View>
       )}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -12,18 +12,22 @@ import { API_BASE_URL } from '@/constants/api';
 import type { User } from '@/context/AuthContext';
 import { useAuth } from '@/hooks/useAuth';
 
+type Profile = User & {
+  course?: string | null;
+  year?: string | null;
+  section?: string | null;
+};
+
 export default function ProfileScreen() {
   const { user, token, logout } = useAuth();
 
-  const [profile, setProfile] = useState<User | null>(user);
+  const [profile, setProfile] = useState<Profile | null>(
+    user ? (user as Profile) : null
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // TODO EXAM: Load GET /profile with fetch(), async/await, and the Bearer token.
-  // TODO EXAM: Add loading/error state with useState and call the loader using useEffect.
-  // TODO EXAM: Check response.ok, handle 401 Unauthorized, and display returned profile data.
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     if (!token) {
       setError('You are not authenticated.');
       setLoading(false);
@@ -55,7 +59,7 @@ export default function ProfileScreen() {
 
       const data = await response.json();
 
-      const profileData: User =
+      const profileData: Profile =
         data?.user ??
         data?.profile ??
         data;
@@ -70,11 +74,11 @@ export default function ProfileScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, logout]);
 
   useEffect(() => {
     loadProfile();
-  }, [token]);
+  }, [loadProfile]);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -117,6 +121,18 @@ export default function ProfileScreen() {
 
           <Text style={styles.text}>
             Role: {profile?.role || '—'}
+          </Text>
+
+          <Text style={styles.text}>
+            Course: {profile?.course || '—'}
+          </Text>
+
+          <Text style={styles.text}>
+            Year: {profile?.year || '—'}
+          </Text>
+
+          <Text style={styles.text}>
+            Section: {profile?.section || '—'}
           </Text>
 
           {!profile && (
